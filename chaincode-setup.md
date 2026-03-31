@@ -225,9 +225,71 @@ peer chaincode query -C ${CHANNEL_NAME} -n ${CC_NAME} \
 
 ---
 
-## 7) Notes (important)
+## 7) Stop today / Start tomorrow (preserving chaincode + ledgers)
 
-1. **Endorsement policy:** since this is **single org TRST01**, we approve/commit once from VM1 (peer0). Still, both peers must have the chaincode installed.
-2. **Preserving data:** if you do `docker-compose stop` / `up` later, the committed chaincode definition and ledger state stay in the Docker volumes. You only need to re-run the lifecycle if you deleted volumes (`down --volumes`).
-3. **Channel membership:** after you join peers, `oatschannel.block` must exist in both `oats-network1/` and `oats-network2/`.
+The chaincode definition and all ledger data are stored in Docker **volumes** mounted into peer/orderer containers. To keep everything and just pause/restart:
+
+### 7.1 Stop network (VM1 and VM2)
+
+**VM1:**
+
+```bash
+cd ~/fabric-dev/fabric-samples/oats-cluster/oats-network1
+docker-compose -f compose/compose-test-net.yaml -f compose/docker/docker-compose-test-net.yaml stop \
+  orderer1.example.com peer0.trst01.example.com
+```
+
+**VM2:**
+
+```bash
+cd ~/fabric-dev/fabric-samples/oats-cluster/oats-network2
+docker-compose -f compose/compose-test-net.yaml -f compose/docker/docker-compose-test-net.yaml stop \
+  orderer2.example.com orderer3.example.com peer1.trst01.example.com
+```
+
+### 7.2 Start network again (tomorrow)
+
+**VM1:**
+
+```bash
+cd ~/fabric-dev/fabric-samples/oats-cluster/oats-network1
+docker-compose -f compose/compose-test-net.yaml -f compose/docker/docker-compose-test-net.yaml up -d \
+  orderer1.example.com peer0.trst01.example.com
+```
+
+**VM2:**
+
+```bash
+cd ~/fabric-dev/fabric-samples/oats-cluster/oats-network2
+docker-compose -f compose/compose-test-net.yaml -f compose/docker/docker-compose-test-net.yaml up -d \
+  orderer2.example.com orderer3.example.com peer1.trst01.example.com
+```
+
+In this flow:
+- You **do not** need to re-run `cryptogen`, `configtxgen`, `osnadmin channel join`, `peer channel join`, or the chaincode lifecycle commands.
+- All chaincode definitions and ledgers persist.
+
+### 7.3 Full reset (only if you want to wipe everything)
+
+If you intentionally want a clean slate (delete ledgers + chaincode state):
+
+```bash
+cd ~/fabric-dev/fabric-samples/oats-cluster/oats-network1
+docker-compose -f compose/compose-test-net.yaml -f compose/docker/docker-compose-test-net.yaml down --volumes --remove-orphans
+
+cd ~/fabric-dev/fabric-samples/oats-cluster/oats-network2
+docker-compose -f compose/compose-test-net.yaml -f compose/docker/docker-compose-test-net.yaml down --volumes --remove-orphans
+```
+
+Then re-run:
+- Network bring-up (see `README_TRST01_RAFT_OATSCHANNEL.md`)
+- This chaincode lifecycle guide from Phase A.
+
+---
+
+## 8) Notes (important)
+
+1. **Endorsement policy:** this is **single org TRST01**, so we approve/commit once from VM1 (peer0). Both peers must still have the chaincode **installed** to endorse/query.
+2. **Preserving data:** only `down --volumes` wipes ledgers/definitions; `stop`/`up` preserves everything.
+3. **Channel membership:** after peer joins, `oatschannel.block` should live in both `oats-network1/` and `oats-network2/` to ease re-joins or new peers.
 
