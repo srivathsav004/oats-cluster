@@ -56,29 +56,29 @@ You will use two customized network folders:
 From your local machine, copy the prepared network folders:
 
 **Using FileZilla:**
-- Copy `oats-network1/` to VM1 (40.81.236.78) at `~/fabric-dev/fabric-samples/oats-cluster/`
-- Copy `oats-network2/` to VM2 (20.244.16.67) at `~/fabric-dev/fabric-samples/oats-cluster/`
+- Copy `oats-network1/` contents to VM1 (40.81.236.78) at `~/fabric-samples/oats-cluster/oats-network1/`
+- Copy `oats-network2/` contents to VM2 (20.244.16.67) at `~/fabric-samples/oats-cluster/oats-network2/`
 
 **Using SCP:**
 ```bash
 # Copy to VM1
-scp -r oats-network1 user@40.81.236.78:~/fabric-dev/fabric-samples/oats-cluster/
+scp -r oats-network1/* user@40.81.236.78:~/fabric-samples/oats-cluster/oats-network1/
 
 # Copy to VM2  
-scp -r oats-network2 user@20.244.16.67:~/fabric-dev/fabric-samples/oats-cluster/
+scp -r oats-network2/* user@20.244.16.67:~/fabric-samples/oats-cluster/oats-network2/
 
 # Copy shared binaries (if needed)
-scp -r bin user@40.81.236.78:~/fabric-dev/fabric-samples/oats-cluster/
-scp -r bin user@20.244.16.67:~/fabric-dev/fabric-samples/oats-cluster/
+scp -r bin user@40.81.236.78:~/fabric-samples/oats-cluster/
+scp -r bin user@20.244.16.67:~/fabric-samples/oats-cluster/
 ```
 
 ### Step 2: VM-specific setup commands
 
 **On VM1 (40.81.236.78):**
 ```bash
-# Create directory structure
-mkdir -p ~/fabric-dev/fabric-samples/oats-cluster
-cd ~/fabric-dev/fabric-samples/oats-cluster
+# Create directory structure (if not exists)
+mkdir -p ~/fabric-samples/oats-cluster
+cd ~/fabric-samples/oats-cluster/oats-network1
 
 # Verify folders exist
 ls -la
@@ -95,9 +95,9 @@ EOF'
 
 **On VM2 (20.244.16.67):**
 ```bash
-# Create directory structure
-mkdir -p ~/fabric-dev/fabric-samples/oats-cluster
-cd ~/fabric-dev/fabric-samples/oats-cluster
+# Create directory structure (if not exists)
+mkdir -p ~/fabric-samples/oats-cluster
+cd ~/fabric-samples/oats-cluster/oats-network2
 
 # Verify folders exist
 ls -la
@@ -148,10 +148,10 @@ Ensure these hostnames resolve correctly (example via `/etc/hosts`):
 
 **On VM1 (40.81.236.78):**
 ```bash
-cd ~/fabric-dev/fabric-samples/oats-cluster/oats-network1
+cd ~/fabric-samples/oats-cluster/oats-network1
 
 # Add both system paths and the Fabric binary path
-export PATH=/usr/bin:/bin:${PWD}/../../bin:${PWD}
+export PATH=/usr/bin:/bin:${PWD}/../bin:${PWD}
 
 # Set Docker socket
 export DOCKER_SOCK=/var/run/docker.sock
@@ -165,10 +165,10 @@ newgrp docker
 
 **On VM2 (20.244.16.67):**
 ```bash
-cd ~/fabric-dev/fabric-samples/oats-cluster/oats-network2
+cd ~/fabric-samples/oats-cluster/oats-network2
 
 # Add both system paths and the Fabric binary path
-export PATH=/usr/bin:/bin:${PWD}/../../bin:${PWD}
+export PATH=/usr/bin:/bin:${PWD}/../bin:${PWD}
 
 # Set Docker socket
 export DOCKER_SOCK=/var/run/docker.sock
@@ -193,7 +193,8 @@ export DOCKER_SOCK=/var/run/docker.sock
 ```
 
 Notes:
-- `PATH` includes `${PWD}/../../bin` because the Fabric binaries live at `oats-cluster/bin` relative to `oats-network*`.
+- **VM Deployment**: `PATH` includes `${PWD}/../bin` because the Fabric binaries live at `oats-cluster/bin` relative to `oats-network*`.
+- **Local Development**: `PATH` includes `${PWD}/../../bin` for the original directory structure.
 - Setting `DOCKER_SOCK` avoids compose warnings and ensures the peercfg mounts work.
 
 ---
@@ -217,7 +218,7 @@ cp -r ../test-network oats-network2
 1) Go to VM1 network folder:
 
 ```bash
-cd ~/fabric-dev/fabric-samples/oats-cluster/oats-network1
+cd ~/fabric-samples/oats-cluster/oats-network1
 ```
 
 2) If you have old state (optional):
@@ -237,7 +238,7 @@ cryptogen generate --config=./organizations/cryptogen/crypto-config.yaml --outpu
 ## Phase 4 — Generate the channel block (run on VM1)
 
 ```bash
-cd ~/fabric-dev/fabric-samples/oats-cluster/oats-network1
+cd ~/fabric-samples/oats-cluster/oats-network1
 
 rm -rf ./channel-artifacts
 mkdir -p ./channel-artifacts
@@ -258,8 +259,8 @@ configtxgen -profile ChannelUsingRaft \
 On VM1:
 
 ```bash
-scp -r ./organizations/ user@20.244.16.67:~/fabric-dev/fabric-samples/oats-cluster/oats-network2/
-scp -r ./channel-artifacts/ user@20.244.16.67:~/fabric-dev/fabric-samples/oats-cluster/oats-network2/
+scp -r ./organizations/ user@20.244.16.67:~/fabric-samples/oats-cluster/oats-network2/
+scp -r ./channel-artifacts/ user@20.244.16.67:~/fabric-samples/oats-cluster/oats-network2/
 ```
 
 ---
@@ -268,13 +269,13 @@ scp -r ./channel-artifacts/ user@20.244.16.67:~/fabric-dev/fabric-samples/oats-c
 
 ### VM1: start `orderer1.example.com`
 ```bash
-cd ~/fabric-dev/fabric-samples/oats-cluster/oats-network1
+cd ~/fabric-samples/oats-cluster/oats-network1
 docker-compose -f compose/compose-test-net.yaml -f compose/docker/docker-compose-test-net.yaml up -d orderer1.example.com
 ```
 
 ### VM2: start `orderer2.example.com` and `orderer3.example.com`
 ```bash
-cd ~/fabric-dev/fabric-samples/oats-cluster/oats-network2
+cd ~/fabric-samples/oats-cluster/oats-network2
 docker-compose -f compose/compose-test-net.yaml -f compose/docker/docker-compose-test-net.yaml up -d orderer2.example.com orderer3.example.com
 ```
 
@@ -282,22 +283,58 @@ docker-compose -f compose/compose-test-net.yaml -f compose/docker/docker-compose
 
 ## Phase 7 — Join orderers to the channel (VM1 generates, joins are per-VM)
 
+### For VM Deployment:
+
+**On VM1 (40.81.236.78):**
+```bash
+cd ~/fabric-samples/oats-cluster/oats-network1
+
+export CHANNEL_ID=oatschannel
+export ORDERER_CA=$PWD/organizations/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem
+
+# Join orderer1
+osnadmin channel join \
+  --channelID $CHANNEL_ID \
+  --config-block ./channel-artifacts/${CHANNEL_ID}.block \
+  -o 40.81.236.78:7053 \
+  --ca-file "$ORDERER_CA" \
+  --client-cert "$PWD/organizations/ordererOrganizations/example.com/orderers/orderer1.example.com/tls/server.crt" \
+  --client-key "$PWD/organizations/ordererOrganizations/example.com/orderers/orderer1.example.com/tls/server.key"
+```
+
+**On VM2 (20.244.16.67):**
+```bash
+cd ~/fabric-samples/oats-cluster/oats-network2
+
+export CHANNEL_ID=oatschannel
+export ORDERER_CA=$PWD/organizations/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem
+
+# Join orderer2
+osnadmin channel join \
+  --channelID $CHANNEL_ID \
+  --config-block ./channel-artifacts/${CHANNEL_ID}.block \
+  -o 20.244.16.67:8053 \
+  --ca-file "$ORDERER_CA" \
+  --client-cert "$PWD/organizations/ordererOrganizations/example.com/orderers/orderer2.example.com/tls/server.crt" \
+  --client-key "$PWD/organizations/ordererOrganizations/example.com/orderers/orderer2.example.com/tls/server.key"
+
+# Join orderer3
+osnadmin channel join \
+  --channelID $CHANNEL_ID \
+  --config-block ./channel-artifacts/${CHANNEL_ID}.block \
+  -o 20.244.16.67:9053 \
+  --ca-file "$ORDERER_CA" \
+  --client-cert "$PWD/organizations/ordererOrganizations/example.com/orderers/orderer3.example.com/tls/server.crt" \
+  --client-key "$PWD/organizations/ordererOrganizations/example.com/orderers/orderer3.example.com/tls/server.key"
+```
+
+### For Local Development (single machine):
+
 Set common var on each VM:
 
 ```bash
 export CHANNEL_ID=oatschannel
 export ORDERER_CA=$PWD/organizations/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem
-```
-
-### VM1: join orderer1
-```bash
-osnadmin channel join \
-  --channelID $CHANNEL_ID \
-  --config-block ./channel-artifacts/${CHANNEL_ID}.block \
-  -o localhost:7053 \
-  --ca-file "$ORDERER_CA" \
-  --client-cert "$PWD/organizations/ordererOrganizations/example.com/orderers/orderer1.example.com/tls/server.crt" \
-  --client-key  "$PWD/organizations/ordererOrganizations/example.com/orderers/orderer1.example.com/tls/server.key"
 ```
 
 ### VM2: join orderer2 and orderer3
@@ -308,7 +345,7 @@ osnadmin channel join \
   -o localhost:8053 \
   --ca-file "$ORDERER_CA" \
   --client-cert "$PWD/organizations/ordererOrganizations/example.com/orderers/orderer2.example.com/tls/server.crt" \
-  --client-key  "$PWD/organizations/ordererOrganizations/example.com/orderers/orderer2.example.com/tls/server.key"
+  --client-key "$PWD/organizations/ordererOrganizations/example.com/orderers/orderer2.example.com/tls/server.key"
 
 osnadmin channel join \
   --channelID $CHANNEL_ID \
@@ -316,12 +353,58 @@ osnadmin channel join \
   -o localhost:9053 \
   --ca-file "$ORDERER_CA" \
   --client-cert "$PWD/organizations/ordererOrganizations/example.com/orderers/orderer3.example.com/tls/server.crt" \
-  --client-key  "$PWD/organizations/ordererOrganizations/example.com/orderers/orderer3.example.com/tls/server.key"
+  --client-key "$PWD/organizations/ordererOrganizations/example.com/orderers/orderer3.example.com/tls/server.key"
 ```
 
 ---
 
 ## Phase 8 — Start peers + join peers
+
+### For VM Deployment:
+
+**On VM1 (40.81.236.78):**
+```bash
+cd ~/fabric-samples/oats-cluster/oats-network1
+docker-compose -f compose/compose-test-net.yaml -f compose/docker/docker-compose-test-net.yaml up -d peer0.trst01.example.com
+
+export FABRIC_CFG_PATH=$PWD/compose/docker/peercfg
+export CORE_PEER_TLS_ENABLED=true
+export CORE_PEER_LOCALMSPID=Trst01MSP
+export CORE_PEER_MSPCONFIGPATH=$PWD/organizations/peerOrganizations/trst01.example.com/users/Admin@trst01.example.com/msp
+export CORE_PEER_TLS_ROOTCERT_FILE=$PWD/organizations/peerOrganizations/trst01.example.com/tlsca/tlsca.trst01.example.com-cert.pem
+export CORE_PEER_ADDRESS=40.81.236.78:7051
+export CORE_PEER_ID=peer0.trst01.example.com
+
+export ORDERER_CA=$PWD/organizations/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem
+
+peer channel join -b ./channel-artifacts/oatschannel.block \
+  -o 40.81.236.78:7050 \
+  --ordererTLSHostnameOverride orderer1.example.com \
+  --tls --cafile $ORDERER_CA
+```
+
+**On VM2 (20.244.16.67):**
+```bash
+cd ~/fabric-samples/oats-cluster/oats-network2
+docker-compose -f compose/compose-test-net.yaml -f compose/docker/docker-compose-test-net.yaml up -d peer1.trst01.example.com
+
+export FABRIC_CFG_PATH=$PWD/compose/docker/peercfg
+export CORE_PEER_TLS_ENABLED=true
+export CORE_PEER_LOCALMSPID=Trst01MSP
+export CORE_PEER_MSPCONFIGPATH=$PWD/organizations/peerOrganizations/trst01.example.com/users/Admin@trst01.example.com/msp
+export CORE_PEER_TLS_ROOTCERT_FILE=$PWD/organizations/peerOrganizations/trst01.example.com/tlsca/tlsca.trst01.example.com-cert.pem
+export CORE_PEER_ADDRESS=20.244.16.67:9051
+export CORE_PEER_ID=peer1.trst01.example.com
+
+export ORDERER_CA=$PWD/organizations/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem
+
+peer channel join -b ./channel-artifacts/oatschannel.block \
+  -o 20.244.16.67:8050 \
+  --ordererTLSHostnameOverride orderer2.example.com \
+  --tls --cafile $ORDERER_CA
+```
+
+### For Local Development (single machine):
 
 ### VM1 peer0: start + join
 ```bash
