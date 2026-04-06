@@ -20,22 +20,22 @@ All commands assume you are in either:
 1. **Copy chaincode to VM1:**
 ```bash
 # From local machine to VM1
-scp -r chaincode/ user@40.81.236.78:~/fabric-dev/fabric-samples/oats-cluster/oats-network1/
+scp -r chaincode/ user@40.81.236.78:~/fabric-samples/oats-cluster/oats-network1/
 ```
 
 2. **Copy chaincode to VM2:**
 ```bash
 # From local machine to VM2  
-scp -r chaincode/ user@20.244.16.67:~/fabric-dev/fabric-samples/oats-cluster/oats-network2/
+scp -r chaincode/ user@20.244.16.67:~/fabric-samples/oats-cluster/oats-network2/
 ```
 
 3. **Verify chaincode exists on both VMs:**
 ```bash
 # On VM1
-ls -la ~/fabric-dev/fabric-samples/oats-cluster/oats-network1/chaincode/oats-traceability-javascript/
+ls -la ~/fabric-samples/oats-cluster/oats-network1/chaincode/oats-traceability-javascript/
 
 # On VM2
-ls -la ~/fabric-dev/fabric-samples/oats-cluster/oats-network2/chaincode/oats-traceability-javascript/
+ls -la ~/fabric-samples/oats-cluster/oats-network2/chaincode/oats-traceability-javascript/
 ```
 
 ---
@@ -70,10 +70,10 @@ With at least:
 
 **On VM1 (40.81.236.78):**
 ```bash
-cd ~/fabric-dev/fabric-samples/oats-cluster/oats-network1
+cd ~/fabric-samples/oats-cluster/oats-network1
 
 # Add both system paths and the Fabric binary path
-export PATH=/usr/bin:/bin:${PWD}/../../bin:${PWD}
+export PATH=/usr/bin:/bin:${PWD}/../bin:${PWD}
 
 # Docker socket for docker-compose / compose peercfg mounts
 export DOCKER_SOCK=/var/run/docker.sock
@@ -92,10 +92,10 @@ export ORDERER_CA=$PWD/organizations/ordererOrganizations/example.com/tlsca/tlsc
 
 **On VM2 (20.244.16.67):**
 ```bash
-cd ~/fabric-dev/fabric-samples/oats-cluster/oats-network2
+cd ~/fabric-samples/oats-cluster/oats-network2
 
 # Add both system paths and the Fabric binary path
-export PATH=/usr/bin:/bin:${PWD}/../../bin:${PWD}
+export PATH=/usr/bin:/bin:${PWD}/../bin:${PWD}
 
 # Docker socket for docker-compose / compose peercfg mounts
 export DOCKER_SOCK=/var/run/docker.sock
@@ -153,7 +153,7 @@ export ORDERER_CA=$PWD/organizations/ordererOrganizations/example.com/tlsca/tlsc
 On **VM1**:
 
 ```bash
-cd ~/fabric-dev/fabric-samples/oats-cluster/oats-network1
+cd ~/fabric-samples/oats-cluster/oats-network1
 export CC_SRC_PATH=$PWD/chaincode/oats-traceability-javascript
 ```
 
@@ -201,13 +201,13 @@ peer lifecycle chaincode install ${CC_NAME}.tar.gz
 From **VM1**:
 
 ```bash
-scp ${CC_NAME}.tar.gz user@20.244.16.67:~/fabric-dev/fabric-samples/oats-cluster/oats-network2/
+scp ${CC_NAME}.tar.gz user@20.244.16.67:~/fabric-samples/oats-cluster/oats-network2/
 ```
 
 On **VM2 (20.244.16.67)**:
 
 ```bash
-cd ~/fabric-dev/fabric-samples/oats-cluster/oats-network2
+cd ~/fabric-samples/oats-cluster/oats-network2
 
 export CORE_PEER_TLS_ENABLED=true
 export CORE_PEER_LOCALMSPID=Trst01MSP
