@@ -44,16 +44,97 @@ You will use two customized network folders:
 
 ---
 
-## Phase 0 — Hostname/IP mapping (must exist on both VMs)
+## Phase 0 — VM Deployment (Copy folders to remote VMs)
+
+### Prerequisites
+- FileZilla or SCP access to both VMs
+- Both VMs have Docker and Docker Compose installed
+- Fabric binaries available on both VMs
+
+### Step 1: Copy folders to VMs
+
+From your local machine, copy the prepared network folders:
+
+**Using FileZilla:**
+- Copy `oats-network1/` to VM1 (40.81.236.78) at `~/fabric-dev/fabric-samples/oats-cluster/`
+- Copy `oats-network2/` to VM2 (20.244.16.67) at `~/fabric-dev/fabric-samples/oats-cluster/`
+
+**Using SCP:**
+```bash
+# Copy to VM1
+scp -r oats-network1 user@40.81.236.78:~/fabric-dev/fabric-samples/oats-cluster/
+
+# Copy to VM2  
+scp -r oats-network2 user@20.244.16.67:~/fabric-dev/fabric-samples/oats-cluster/
+
+# Copy shared binaries (if needed)
+scp -r bin user@40.81.236.78:~/fabric-dev/fabric-samples/oats-cluster/
+scp -r bin user@20.244.16.67:~/fabric-dev/fabric-samples/oats-cluster/
+```
+
+### Step 2: VM-specific setup commands
+
+**On VM1 (40.81.236.78):**
+```bash
+# Create directory structure
+mkdir -p ~/fabric-dev/fabric-samples/oats-cluster
+cd ~/fabric-dev/fabric-samples/oats-cluster
+
+# Verify folders exist
+ls -la
+
+# Set up hostname resolution (if not already configured)
+sudo bash -c 'cat >> /etc/hosts << EOF
+40.81.236.78 orderer1.example.com
+40.81.236.78 peer0.trst01.example.com
+20.244.16.67 orderer2.example.com
+20.244.16.67 orderer3.example.com
+20.244.16.67 peer1.trst01.example.com
+EOF'
+```
+
+**On VM2 (20.244.16.67):**
+```bash
+# Create directory structure
+mkdir -p ~/fabric-dev/fabric-samples/oats-cluster
+cd ~/fabric-dev/fabric-samples/oats-cluster
+
+# Verify folders exist
+ls -la
+
+# Set up hostname resolution (if not already configured)
+sudo bash -c 'cat >> /etc/hosts << EOF
+40.81.236.78 orderer1.example.com
+40.81.236.78 peer0.trst01.example.com
+20.244.16.67 orderer2.example.com
+20.244.16.67 orderer3.example.com
+20.244.16.67 peer1.trst01.example.com
+EOF'
+```
+
+---
+
+## Phase 0 — Local Development Setup (Alternative)
+
+If running locally on a single machine for development:
+
+### Hostname/IP mapping (must exist on both VMs)
 
 Ensure these hostnames resolve correctly (example via `/etc/hosts`):
 
 ```bash
-# VM1 (40.81.236.78)
+# Local development (single machine)
+127.0.0.1 orderer1.example.com
+127.0.0.1 orderer2.example.com
+127.0.0.1 orderer3.example.com
+127.0.0.1 peer0.trst01.example.com
+127.0.0.1 peer1.trst01.example.com
+
+# VM1 (40.81.236.78) - when deployed on actual VMs
 40.81.236.78 orderer1.example.com
 40.81.236.78 peer0.trst01.example.com
 
-# VM2 (20.244.16.67)
+# VM2 (20.244.16.67) - when deployed on actual VMs
 20.244.16.67 orderer2.example.com
 20.244.16.67 orderer3.example.com
 20.244.16.67 peer1.trst01.example.com
@@ -62,6 +143,44 @@ Ensure these hostnames resolve correctly (example via `/etc/hosts`):
 ---
 
 ## Phase 1 — Environment setup (PATH + Docker socket)
+
+### For VM Deployment (run on each VM)
+
+**On VM1 (40.81.236.78):**
+```bash
+cd ~/fabric-dev/fabric-samples/oats-cluster/oats-network1
+
+# Add both system paths and the Fabric binary path
+export PATH=/usr/bin:/bin:${PWD}/../../bin:${PWD}
+
+# Set Docker socket
+export DOCKER_SOCK=/var/run/docker.sock
+
+# Verify Docker is running
+sudo systemctl status docker
+sudo systemctl start docker
+sudo usermod -aG docker $USER
+newgrp docker
+```
+
+**On VM2 (20.244.16.67):**
+```bash
+cd ~/fabric-dev/fabric-samples/oats-cluster/oats-network2
+
+# Add both system paths and the Fabric binary path
+export PATH=/usr/bin:/bin:${PWD}/../../bin:${PWD}
+
+# Set Docker socket
+export DOCKER_SOCK=/var/run/docker.sock
+
+# Verify Docker is running
+sudo systemctl status docker
+sudo systemctl start docker
+sudo usermod -aG docker $USER
+newgrp docker
+```
+
+### For Local Development (single machine)
 
 Run this in your terminal on each VM (from inside either `oats-network1/` or `oats-network2/`):
 
