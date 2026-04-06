@@ -8,45 +8,18 @@ This document describes how to deploy and test your **Node.js** chaincode (`oats
 - **Orderers (RAFT):** `orderer1` (VM1), `orderer2` + `orderer3` (VM2)
 
 All commands assume you are in either:
-- `oats-network1/` on **VM1** (40.81.236.78)
-- `oats-network2/` on **VM2** (20.244.16.67)
-
----
-
-## VM Deployment Prerequisites
-
-### Before deploying chaincode on VMs:
-
-1. **Copy chaincode to VM1:**
-```bash
-# From local machine to VM1
-scp -r chaincode/ user@40.81.236.78:~/fabric-samples/oats-cluster/oats-network1/
-```
-
-2. **Copy chaincode to VM2:**
-```bash
-# From local machine to VM2  
-scp -r chaincode/ user@20.244.16.67:~/fabric-samples/oats-cluster/oats-network2/
-```
-
-3. **Verify chaincode exists on both VMs:**
-```bash
-# On VM1
-ls -la ~/fabric-samples/oats-cluster/oats-network1/chaincode/oats-traceability-javascript/
-
-# On VM2
-ls -la ~/fabric-samples/oats-cluster/oats-network2/chaincode/oats-traceability-javascript/
-```
+- `oats-network1/` on **VM1**
+- `oats-network2/` on **VM2**
 
 ---
 
 ## Architecture assumptions (what to run where)
 
-### VM1 (`oats-network1/`) - 40.81.236.78
+### VM1 (`oats-network1/`)
 - You run: **package + approve + commit** (from `peer0`)
 - You may also run: installs (from `peer0`)
 
-### VM2 (`oats-network2/`) - 20.244.16.67
+### VM2 (`oats-network2/`)
 - You run: install only (from `peer1`)
 
 ---
@@ -65,54 +38,6 @@ With at least:
 ---
 
 ## 1) Phase A — Environment setup (run on each VM terminal)
-
-### For VM Deployment:
-
-**On VM1 (40.81.236.78):**
-```bash
-cd ~/fabric-samples/oats-cluster/oats-network1
-
-# Add both system paths and the Fabric binary path
-export PATH=/usr/bin:/bin:${PWD}/../bin:${PWD}
-
-# Docker socket for docker-compose / compose peercfg mounts
-export DOCKER_SOCK=/var/run/docker.sock
-
-# CLI config for peer commands
-export FABRIC_CFG_PATH=$PWD/compose/docker/peercfg
-unset CORE_PEER_TLS_ENABLED # optional cleanup if you have it set
-
-# Common variables
-export CHANNEL_NAME=oatschannel
-export CC_NAME=oats-traceability
-export CC_VERSION=1.0
-export CC_SEQUENCE=1
-export ORDERER_CA=$PWD/organizations/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem
-```
-
-**On VM2 (20.244.16.67):**
-```bash
-cd ~/fabric-samples/oats-cluster/oats-network2
-
-# Add both system paths and the Fabric binary path
-export PATH=/usr/bin:/bin:${PWD}/../bin:${PWD}
-
-# Docker socket for docker-compose / compose peercfg mounts
-export DOCKER_SOCK=/var/run/docker.sock
-
-# CLI config for peer commands
-export FABRIC_CFG_PATH=$PWD/compose/docker/peercfg
-unset CORE_PEER_TLS_ENABLED # optional cleanup if you have it set
-
-# Common variables
-export CHANNEL_NAME=oatschannel
-export CC_NAME=oats-traceability
-export CC_VERSION=1.0
-export CC_SEQUENCE=1
-export ORDERER_CA=$PWD/organizations/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem
-```
-
-### For Local Development (single machine):
 
 Run this on the VM where you are executing commands (VM1 or VM2), inside `oats-network1/` or `oats-network2/`.
 
@@ -153,7 +78,7 @@ export ORDERER_CA=$PWD/organizations/ordererOrganizations/example.com/tlsca/tlsc
 On **VM1**:
 
 ```bash
-cd ~/fabric-samples/oats-cluster/oats-network1
+cd ~/fabric-dev/fabric-samples/oats-cluster/oats-network1
 export CC_SRC_PATH=$PWD/chaincode/oats-traceability-javascript
 ```
 
@@ -183,14 +108,14 @@ echo "PACKAGE_ID=${PACKAGE_ID}"
 
 ### 3.1 Install on VM1 peer0
 
-On **VM1 (40.81.236.78)**:
+On **VM1**:
 
 ```bash
 export CORE_PEER_TLS_ENABLED=true
 export CORE_PEER_LOCALMSPID=Trst01MSP
 export CORE_PEER_MSPCONFIGPATH=$PWD/organizations/peerOrganizations/trst01.example.com/users/Admin@trst01.example.com/msp
 export CORE_PEER_TLS_ROOTCERT_FILE=$PWD/organizations/peerOrganizations/trst01.example.com/tlsca/tlsca.trst01.example.com-cert.pem
-export CORE_PEER_ADDRESS=40.81.236.78:7051
+export CORE_PEER_ADDRESS=localhost:7051
 export CORE_PEER_ID=peer0.trst01.example.com
 
 peer lifecycle chaincode install ${CC_NAME}.tar.gz
@@ -201,19 +126,19 @@ peer lifecycle chaincode install ${CC_NAME}.tar.gz
 From **VM1**:
 
 ```bash
-scp ${CC_NAME}.tar.gz user@20.244.16.67:~/fabric-samples/oats-cluster/oats-network2/
+scp ${CC_NAME}.tar.gz user@20.244.16.67:~/fabric-dev/fabric-samples/oats-cluster/oats-network2/
 ```
 
-On **VM2 (20.244.16.67)**:
+On **VM2**:
 
 ```bash
-cd ~/fabric-samples/oats-cluster/oats-network2
+cd ~/fabric-dev/fabric-samples/oats-cluster/oats-network2
 
 export CORE_PEER_TLS_ENABLED=true
 export CORE_PEER_LOCALMSPID=Trst01MSP
 export CORE_PEER_MSPCONFIGPATH=$PWD/organizations/peerOrganizations/trst01.example.com/users/Admin@trst01.example.com/msp
 export CORE_PEER_TLS_ROOTCERT_FILE=$PWD/organizations/peerOrganizations/trst01.example.com/tlsca/tlsca.trst01.example.com-cert.pem
-export CORE_PEER_ADDRESS=20.244.16.67:9051
+export CORE_PEER_ADDRESS=localhost:9051
 export CORE_PEER_ID=peer1.trst01.example.com
 
 peer lifecycle chaincode install ${CC_NAME}.tar.gz
@@ -222,27 +147,6 @@ peer lifecycle chaincode install ${CC_NAME}.tar.gz
 ---
 
 ## 4) Phase D — Approve (VM1 peer0 only)
-
-### For VM Deployment:
-
-On **VM1 (40.81.236.78)** (peer0 context):
-
-```bash
-export ORDERER_ADDRESS=40.81.236.78:7050
-export ORDERER_TLS_HOST=orderer1.example.com
-
-peer lifecycle chaincode approveformyorg \
-  -o ${ORDERER_ADDRESS} --ordererTLSHostnameOverride ${ORDERER_TLS_HOST} \
-  --tls --cafile "${ORDERER_CA}" \
-  --channelID ${CHANNEL_NAME} \
-  --name ${CC_NAME} \
-  --version ${CC_VERSION} \
-  --package-id ${PACKAGE_ID} \
-  --sequence ${CC_SEQUENCE} \
-  --signature-policy "OR('Trst01MSP.peer')"
-```
-
-### For Local Development (single machine):
 
 On **VM1** (peer0 context):
 
@@ -388,4 +292,3 @@ Then re-run:
 1. **Endorsement policy:** this is **single org TRST01**, so we approve/commit once from VM1 (peer0). Both peers must still have the chaincode **installed** to endorse/query.
 2. **Preserving data:** only `down --volumes` wipes ledgers/definitions; `stop`/`up` preserves everything.
 3. **Channel membership:** after peer joins, `oatschannel.block` should live in both `oats-network1/` and `oats-network2/` to ease re-joins or new peers.
-
